@@ -11,6 +11,11 @@ let hideTimeout = null;
 // ensure a smooth opacity transition
 if (loadingWrapper) loadingWrapper.style.transition = "opacity 0.2s ease";
 
+const deleteMessage = document.querySelector(".delete-message");
+
+// ensure a smooth opacity transition for delete message
+if (deleteMessage) deleteMessage.style.transition = "opacity 0.2s ease";
+
 function showLoading() {
   if (!loadingWrapper) return;
   if (hideTimeout) {
@@ -40,8 +45,28 @@ function hideLoading() {
   }, 500); // 0.5s delay
 }
 
+function showDeleteMessage() {
+  if (!deleteMessage) return;
+  deleteMessage.style.display = "";
+  // ensure layout applied before changing opacity
+  requestAnimationFrame(() => {
+    deleteMessage.style.opacity = "1";
+  });
+}
+
+function hideDeleteMessage() {
+  if (!deleteMessage) return;
+  deleteMessage.style.opacity = "0";
+  // delay setting display none
+  setTimeout(() => {
+    if (deleteMessage && deleteMessage.style.opacity === "0")
+      deleteMessage.style.display = "none";
+  }, 200); // 0.2s delay
+}
+
 // start hidden before trigger
 hideLoading();
+hideDeleteMessage();
 
 gsap.fromTo(
   ".loading-bar-progress",
@@ -50,10 +75,11 @@ gsap.fromTo(
     width: "100%",
     ease: "none",
     scrollTrigger: {
-      trigger: ".trigger1",
+      trigger: "#trigger2",
       start: "center bottom",
       end: "center top",
       scrub: true,
+      pin: true,
       onUpdate: (self) => {
         const percent = (self.progress * 100).toFixed(2);
         const el = document.querySelector(".loading-percentage");
@@ -66,10 +92,27 @@ gsap.fromTo(
           hideLoading();
         }
       },
-      onEnter: showLoading,
-      onEnterBack: showLoading,
+      onEnter: () => {
+        showLoading();
+        hideDeleteMessage();
+      },
+      onEnterBack: () => {
+        showLoading();
+        hideDeleteMessage();
+      },
       onLeave: hideLoading,
       onLeaveBack: hideLoading,
     },
   }
 );
+
+// Separate ScrollTrigger for .delete-message
+ScrollTrigger.create({
+  trigger: "#trigger2",
+  start: "top bottom",
+  end: "center bottom",
+  onEnter: showDeleteMessage,
+  onLeave: hideDeleteMessage,
+  onEnterBack: showDeleteMessage,
+  onLeaveBack: hideDeleteMessage,
+});
